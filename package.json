@@ -1,0 +1,53 @@
+{
+  "name": "a2awall",
+  "version": "0.2.0",
+  "description": "A reusable A2A wrapper with an additional security layer for custom agents.",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    ".env.example"
+  ],
+  "main": "./dist/lib.js",
+  "types": "./dist/lib.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/lib.d.ts",
+      "import": "./dist/lib.js"
+    },
+    "./client": {
+      "types": "./dist/client/connect.d.ts",
+      "import": "./dist/client/connect.js"
+    }
+  },
+  "bin": {
+    "a2awall-connect": "./dist/cli/connect.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "smoke": "tsx src/smoke.ts",
+    "test": "npm run build && node dist/test.js",
+    "connect": "npm run build && node dist/cli/connect.js"
+  },
+  "keywords": [
+    "a2a",
+    "agent",
+    "agent-card",
+    "json-rpc",
+    "security",
+    "middleware",
+    "typescript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@a2a-js/sdk": "^0.3.13",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}

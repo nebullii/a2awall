@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Getting Started | A2AWall</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell docs-shell">
+      <nav class="topnav">
+        <a class="brand" href="./index.html">A2AWall</a>
+        <div class="nav-links">
+          <a href="./getting-started.html">Getting Started</a>
+          <a href="./security-model.html">Security Model</a>
+          <a href="../USER_GUIDE.md">User Guide</a>
+        </div>
+      </nav>
+
+      <main class="docs-layout">
+        <aside class="sidebar">
+          <a href="#install">Install</a>
+          <a href="#run">Run</a>
+          <a href="#call">Call the agent</a>
+          <a href="#library">Use as a library</a>
+          <a href="#publish">GitHub Pages</a>
+        </aside>
+
+        <article class="doc-content">
+          <p class="eyebrow">Getting started</p>
+          <h1>Run the demo and fork it safely</h1>
+          <p class="lede">
+            This guide gets you from clone to a working A2A-compatible secure gateway with the fewest
+            steps possible.
+          </p>
+
+          <h2 id="install">1. Install</h2>
+          <pre><code>npm install
+cp .env.example .env
+npm test</code></pre>
+
+          <h2 id="run">2. Start the demo server</h2>
+          <pre><code>npm run build
+npm start</code></pre>
+
+          <p>Default endpoints:</p>
+          <ul>
+            <li>Agent Card: <code>http://localhost:4000/.well-known/agent-card.json</code></li>
+            <li>JSON-RPC: <code>http://localhost:4000/a2a/jsonrpc</code></li>
+            <li>REST: <code>http://localhost:4000/a2a/rest</code></li>
+            <li>Health: <code>http://localhost:4000/health</code></li>
+          </ul>
+
+          <h2 id="call">3. Call the agent</h2>
+          <pre><code>curl -s http://localhost:4000/a2a/jsonrpc \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer dev-token' \
+  -H 'X-Agent-Capability: echo' \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "1",
+    "method": "message/send",
+    "params": {
+      "message": {
+        "kind": "message",
+        "messageId": "msg-1",
+        "role": "user",
+        "parts": [{ "kind": "text", "text": "hello secure a2a" }],
+        "metadata": { "capability": "echo" }
+      }
+    }
+  }'</code></pre>
+
+          <p>
+            To hit the integrated secure tool path, change the capability to
+            <code>template-echo</code>.
+          </p>
+
+          <h2 id="library">4. Reuse as a library</h2>
+          <pre><code>import { createApp, createRuntimeConfig } from "a2awall";
+import { createExampleAgent } from "../src/core/example-agent.js";
+
+const runtime = createRuntimeConfig(process.env);
+const app = createApp({
+  baseUrl: runtime.baseUrl,
+  agent: createExampleAgent(runtime.securityPolicy),
+  securityPolicy: runtime.securityPolicy
+});
+
+app.listen(runtime.port);</code></pre>
+
+          <h2 id="publish">5. Publish docs with GitHub Pages</h2>
+          <p>
+            In GitHub repository settings, set Pages to serve from the <code>docs/</code> folder on the
+            default branch. No build step is required for this site.
+          </p>
+        </article>
+      </main>
+    </div>
+  </body>
+</html>
