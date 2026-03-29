@@ -3,94 +3,66 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>A2AWall</title>
+    <title>A2AWall Documentation</title>
     <meta
       name="description"
-      content="A2AWall is a gateway and adapter for exposing agents over standard A2A with policy-driven security controls."
+      content="A2AWall documentation for setup, security model, user guide, and roadmap."
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="page-shell">
-      <header class="hero">
-        <nav class="topnav">
-          <a class="brand" href="./index.html">A2AWall</a>
-          <div class="nav-links">
-            <a href="./getting-started.html">Getting Started</a>
-            <a href="./security-model.html">Security Model</a>
-            <a href="../README.md">GitHub</a>
-          </div>
-        </nav>
-
-        <div class="hero-copy">
-          <p class="eyebrow">A2A-compatible security gateway</p>
-          <h1>Standard A2A discovery and transport, with stricter gateway controls.</h1>
+    <div class="docs-page">
+      <header class="docs-header">
+        <div>
+          <p class="eyebrow">Documentation</p>
+          <h1>A2AWall</h1>
           <p class="lede">
-            Use A2AWall when you want clients to recognize your agent through the standard
-            protocol, but you need stronger policy enforcement around admission, trust, tools,
-            memory, retrieval, delegation, and output validation.
+            A2AWall is an A2A-compatible security layer for agent discovery, admission, runtime
+            policy, memory, retrieval, delegation, and output validation.
           </p>
-          <div class="hero-actions">
-            <a class="button primary" href="./getting-started.html">Get Started</a>
-            <a class="button secondary" href="./security-model.html">Read Security Model</a>
-          </div>
         </div>
+        <nav class="topnav docs-nav">
+          <a class="brand" href="./index.html">Overview</a>
+          <a href="./getting-started.html">Getting Started</a>
+          <a href="./security-model.html">Security Model</a>
+          <a href="./user-guide.html">User Guide</a>
+          <a href="https://github.com/nebullii/a2awall">GitHub</a>
+        </nav>
       </header>
 
-      <main>
-        <section class="panel three-up">
-          <article>
-            <h2>Baseline A2A</h2>
-            <p>Expose an Agent Card, JSON-RPC endpoint, REST endpoint, and skill metadata.</p>
-          </article>
-          <article>
-            <h2>Gateway Enforcement</h2>
-            <p>Admit or reject requests by token, capability, scope, trust tier, approvals, and risk.</p>
-          </article>
-          <article>
-            <h2>Secure Runtime</h2>
-            <p>Constrain tool use, protect context and memory boundaries, and validate actions before execution.</p>
-          </article>
+      <main class="docs-main">
+        <section class="doc-block">
+          <h2>Overview</h2>
+          <p>
+            A2AWall keeps baseline A2A discovery and transport intact while adding security controls
+            around request admission and runtime behavior.
+          </p>
+          <ul>
+            <li>Agent Card, JSON-RPC, and REST support for standard A2A clients</li>
+            <li>Admission control for identity, capability, scopes, trust tier, approvals, and size limits</li>
+            <li>Trusted context boundaries for system, user, retrieval, memory, tool, and peer-agent input</li>
+            <li>Sandbox and runtime policy evaluation for tools and actions</li>
+            <li>Memory, retrieval, delegation, and output validation foundations</li>
+          </ul>
         </section>
 
-        <section class="panel">
-          <div class="section-head">
-            <p class="eyebrow">What is implemented</p>
-            <h2>Current capability set</h2>
-          </div>
-          <div class="grid-list">
-            <div class="pill-card">Admission control</div>
-            <div class="pill-card">Trusted context boundary</div>
-            <div class="pill-card">Tool sandbox policy</div>
-            <div class="pill-card">Memory write policy</div>
-            <div class="pill-card">Retrieval trust evaluation</div>
-            <div class="pill-card">Delegation policy</div>
-            <div class="pill-card">Output validation</div>
-            <div class="pill-card">Integrated tool runtime demo</div>
-          </div>
+        <section class="doc-block">
+          <h2>Documentation</h2>
+          <ul class="link-list">
+            <li><a href="./getting-started.html">Getting Started</a></li>
+            <li><a href="./security-model.html">Security Model</a></li>
+            <li><a href="./user-guide.html">User Guide</a></li>
+            <li><a href="https://github.com/nebullii/a2awall/blob/main/README.md">README</a></li>
+            <li><a href="https://github.com/nebullii/a2awall/blob/main/USER_GUIDE.md">USER_GUIDE.md</a></li>
+          </ul>
         </section>
 
-        <section class="panel callout">
-          <div>
-            <p class="eyebrow">Positioning</p>
-            <h2>This is not a new protocol.</h2>
-            <p>
-              A2AWall keeps baseline A2A interoperability and adds a security gateway around
-              it. Generic A2A clients can still discover and call the agent. More advanced clients can
-              also read the additional security metadata and behave more intelligently.
-            </p>
-          </div>
-        </section>
-
-        <section class="panel diagram-panel">
-          <div class="section-head">
-            <p class="eyebrow">Architecture</p>
-            <h2>Where the controls sit</h2>
-          </div>
+        <section class="doc-block">
+          <h2>Architecture</h2>
           <img
             class="architecture-diagram"
             src="./architecture.svg"
-            alt="Architecture diagram showing A2AWall gateway admission, A2A surface, trusted context boundary, secure runtime, tools, memory and retrieval policy, and delegation controls."
+            alt="Architecture diagram for A2AWall."
           />
         </section>
       </main>

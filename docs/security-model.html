@@ -7,67 +7,73 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="page-shell docs-shell">
-      <nav class="topnav">
-        <a class="brand" href="./index.html">A2AWall</a>
-        <div class="nav-links">
+    <div class="docs-page">
+      <header class="docs-header">
+        <div>
+          <p class="eyebrow">Security Model</p>
+          <h1>How the layers fit together</h1>
+          <p class="lede">
+            A2AWall adds layered controls around standard A2A transport and discovery.
+          </p>
+        </div>
+        <nav class="topnav docs-nav">
+          <a class="brand" href="./index.html">Overview</a>
           <a href="./getting-started.html">Getting Started</a>
           <a href="./security-model.html">Security Model</a>
-          <a href="../SECURITY_ROADMAP.md">Roadmap</a>
-        </div>
-      </nav>
+          <a href="./user-guide.html">User Guide</a>
+          <a href="https://github.com/nebullii/a2awall">GitHub</a>
+        </nav>
+      </header>
 
-      <main class="doc-content standalone">
-        <p class="eyebrow">Security model</p>
-        <h1>How the layers fit together</h1>
+      <main class="docs-main">
+        <section class="doc-block">
+          <h2>Architecture</h2>
+          <img
+            class="architecture-diagram"
+            src="./architecture.svg"
+            alt="Architecture diagram for A2AWall."
+          />
+        </section>
 
-        <img
-          class="architecture-diagram"
-          src="./architecture.svg"
-          alt="Architecture diagram for A2AWall."
-        />
+        <section class="doc-block">
+          <h2>1. Gateway admission control</h2>
+          <p>
+            Requests are admitted or rejected based on identity, capability, scopes, trust tier,
+            approvals, and message-size limits.
+          </p>
+        </section>
 
-        <div class="stack">
-          <section class="panel">
-            <h2>1. Gateway admission control</h2>
-            <p>
-              Requests are admitted or rejected based on identity, capability, scopes, trust tier,
-              approvals, and message-size limits.
-            </p>
-          </section>
+        <section class="doc-block">
+          <h2>2. Trusted context boundary</h2>
+          <p>
+            System and developer instructions remain privileged. User, retrieval, memory, tool, and
+            peer-agent content are treated as reference unless explicitly trusted by policy.
+          </p>
+        </section>
 
-          <section class="panel">
-            <h2>2. Trusted context boundary</h2>
-            <p>
-              System and developer instructions remain privileged. User, retrieval, memory, tool, and
-              peer-agent content are treated as reference unless explicitly trusted by policy.
-            </p>
-          </section>
+        <section class="doc-block">
+          <h2>3. Secure runtime and tools</h2>
+          <p>
+            Tool execution should pass through action validation and sandbox policy before it touches
+            files, networks, APIs, or delegated agents.
+          </p>
+        </section>
 
-          <section class="panel">
-            <h2>3. Secure runtime and tools</h2>
-            <p>
-              Tool execution should pass through action validation and sandbox policy before it touches
-              files, networks, APIs, or delegated agents.
-            </p>
-          </section>
+        <section class="doc-block">
+          <h2>4. Memory and retrieval controls</h2>
+          <p>
+            Memory writes are source-aware and tenant-aware. Retrieved documents are classified as
+            allow, reference-only, or quarantine.
+          </p>
+        </section>
 
-          <section class="panel">
-            <h2>4. Memory and retrieval controls</h2>
-            <p>
-              Memory writes are source-aware and tenant-aware. Retrieved documents are classified as
-              allow, reference-only, or quarantine.
-            </p>
-          </section>
-
-          <section class="panel">
-            <h2>5. Delegation controls</h2>
-            <p>
-              Delegation depth, fan-out, capability allowlists, and trust thresholds constrain
-              multi-agent blast radius.
-            </p>
-          </section>
-        </div>
+        <section class="doc-block">
+          <h2>5. Delegation controls</h2>
+          <p>
+            Delegation depth, fan-out, capability allowlists, and trust thresholds constrain
+            multi-agent blast radius.
+          </p>
+        </section>
       </main>
     </div>
   </body>

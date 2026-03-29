@@ -25,9 +25,8 @@ Use this repo when you want baseline A2A interoperability plus your own security
 
 ## Start Here
 
-- User guide: [USER_GUIDE.md](/Users/nehachaudhari/Developer/a2awall/USER_GUIDE.md)
-- Security roadmap: [SECURITY_ROADMAP.md](/Users/nehachaudhari/Developer/a2awall/SECURITY_ROADMAP.md)
-- GitHub Pages docs: publish the [`docs/`](/Users/nehachaudhari/Developer/a2awall/docs) folder
+- User guide: [docs/user-guide.html](https://nebullii.github.io/a2awall/user-guide.html)
+- Documentation: [docs/index.html](https://nebullii.github.io/a2awall/)
 
 ## Quick Start
 

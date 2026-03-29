@@ -7,42 +7,44 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="page-shell docs-shell">
-      <nav class="topnav">
-        <a class="brand" href="./index.html">A2AWall</a>
-        <div class="nav-links">
+    <div class="docs-page">
+      <header class="docs-header">
+        <div>
+          <p class="eyebrow">Getting Started</p>
+          <h1>Run the demo and test the gateway</h1>
+          <p class="lede">
+            This guide gets you from clone to a working local A2AWall server with the fewest steps possible.
+          </p>
+        </div>
+        <nav class="topnav docs-nav">
+          <a class="brand" href="./index.html">Overview</a>
           <a href="./getting-started.html">Getting Started</a>
           <a href="./security-model.html">Security Model</a>
-          <a href="../USER_GUIDE.md">User Guide</a>
-        </div>
-      </nav>
+          <a href="./user-guide.html">User Guide</a>
+          <a href="https://github.com/nebullii/a2awall">GitHub</a>
+        </nav>
+      </header>
 
-      <main class="docs-layout">
-        <aside class="sidebar">
+      <main class="docs-main">
+        <nav class="doc-toc">
           <a href="#install">Install</a>
           <a href="#run">Run</a>
           <a href="#call">Call the agent</a>
           <a href="#library">Use as a library</a>
-          <a href="#publish">GitHub Pages</a>
-        </aside>
+          <a href="#publish">Publish docs</a>
+        </nav>
 
-        <article class="doc-content">
-          <p class="eyebrow">Getting started</p>
-          <h1>Run the demo and fork it safely</h1>
-          <p class="lede">
-            This guide gets you from clone to a working A2A-compatible secure gateway with the fewest
-            steps possible.
-          </p>
-
-          <h2 id="install">1. Install</h2>
+        <section class="doc-block" id="install">
+          <h2>1. Install</h2>
           <pre><code>npm install
 cp .env.example .env
 npm test</code></pre>
+        </section>
 
-          <h2 id="run">2. Start the demo server</h2>
+        <section class="doc-block" id="run">
+          <h2>2. Start the server</h2>
           <pre><code>npm run build
 npm start</code></pre>
-
           <p>Default endpoints:</p>
           <ul>
             <li>Agent Card: <code>http://localhost:4000/.well-known/agent-card.json</code></li>
@@ -50,8 +52,10 @@ npm start</code></pre>
             <li>REST: <code>http://localhost:4000/a2a/rest</code></li>
             <li>Health: <code>http://localhost:4000/health</code></li>
           </ul>
+        </section>
 
-          <h2 id="call">3. Call the agent</h2>
+        <section class="doc-block" id="call">
+          <h2>3. Call the agent</h2>
           <pre><code>curl -s http://localhost:4000/a2a/jsonrpc \
   -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer dev-token' \
@@ -70,13 +74,11 @@ npm start</code></pre>
       }
     }
   }'</code></pre>
+          <p>To hit the integrated secure tool path, change the capability to <code>template-echo</code>.</p>
+        </section>
 
-          <p>
-            To hit the integrated secure tool path, change the capability to
-            <code>template-echo</code>.
-          </p>
-
-          <h2 id="library">4. Reuse as a library</h2>
+        <section class="doc-block" id="library">
+          <h2>4. Use as a library</h2>
           <pre><code>import { createApp, createRuntimeConfig } from "a2awall";
 import { createExampleAgent } from "../src/core/example-agent.js";
 
@@ -88,13 +90,15 @@ const app = createApp({
 });
 
 app.listen(runtime.port);</code></pre>
+        </section>
 
-          <h2 id="publish">5. Publish docs with GitHub Pages</h2>
+        <section class="doc-block" id="publish">
+          <h2>5. Publish docs</h2>
           <p>
             In GitHub repository settings, set Pages to serve from the <code>docs/</code> folder on the
-            default branch. No build step is required for this site.
+            default branch.
           </p>
-        </article>
+        </section>
       </main>
     </div>
   </body>

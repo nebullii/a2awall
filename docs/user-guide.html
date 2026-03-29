@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Guide | A2AWall</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="docs-page">
+      <header class="docs-header">
+        <div>
+          <p class="eyebrow">User Guide</p>
+          <h1>Use A2AWall as a starter and security layer</h1>
+          <p class="lede">
+            A2AWall preserves standard A2A discovery and transport while layering security controls around the agent runtime.
+          </p>
+        </div>
+        <nav class="topnav docs-nav">
+          <a class="brand" href="./index.html">Overview</a>
+          <a href="./getting-started.html">Getting Started</a>
+          <a href="./security-model.html">Security Model</a>
+          <a href="./user-guide.html">User Guide</a>
+          <a href="https://github.com/nebullii/a2awall">GitHub</a>
+        </nav>
+      </header>
+
+      <main class="docs-main">
+        <section class="doc-block">
+          <h2>What is implemented</h2>
+          <ul>
+            <li>Bearer-token authentication</li>
+            <li>Capability-level authorization</li>
+            <li>Scope and trust-tier checks</li>
+            <li>Approval-gate support</li>
+            <li>Trusted context boundary helpers</li>
+            <li>Tool sandbox policy evaluators</li>
+            <li>Memory and retrieval security foundations</li>
+            <li>Delegation and output validation foundations</li>
+          </ul>
+        </section>
+
+        <section class="doc-block">
+          <h2>Quick start</h2>
+          <pre><code>npm install
+cp .env.example .env
+npm test
+npm run build
+npm start</code></pre>
+        </section>
+
+        <section class="doc-block">
+          <h2>Key files</h2>
+          <ul class="link-list">
+            <li><a href="https://github.com/nebullii/a2awall/blob/main/src/core/example-agent.ts">src/core/example-agent.ts</a></li>
+            <li><a href="https://github.com/nebullii/a2awall/blob/main/src/security/policy.ts">src/security/policy.ts</a></li>
+            <li><a href="https://github.com/nebullii/a2awall/blob/main/src/security/admission.ts">src/security/admission.ts</a></li>
+            <li><a href="https://github.com/nebullii/a2awall/blob/main/src/context/trust.ts">src/context/trust.ts</a></li>
+            <li><a href="https://github.com/nebullii/a2awall/blob/main/src/a2a/executor.ts">src/a2a/executor.ts</a></li>
+          </ul>
+        </section>
+
+        <section class="doc-block">
+          <h2>More detail</h2>
+          <p>
+            For the full markdown version in the repository, see
+            <a href="https://github.com/nebullii/a2awall/blob/main/USER_GUIDE.md">USER_GUIDE.md</a>.
+          </p>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
