@@ -1,11 +1,53 @@
 export { createApp, type AppConfig } from "./app.js";
 export { createRuntimeConfig, type RuntimeConfig, type RuntimeEnvironment } from "./config.js";
-export { createAgentCard, CustomAgentExecutor, AGENT_CARD_PATH } from "./a2a/executor.js";
-export { createSecurityMiddleware } from "./security/middleware.js";
-export { evaluateAdmission, type AdmissionContext, type AdmissionDecision } from "./security/admission.js";
+export {
+  createAgentCard,
+  CustomAgentExecutor,
+  GatewayPrincipal,
+  isGatewayPrincipal,
+  AGENT_CARD_PATH,
+  A2AWALL_SECURITY_EXTENSION_URI,
+  type CreateAgentCardOptions,
+  type CustomAgentExecutorOptions
+} from "./a2a/executor.js";
+export {
+  createSecurityMiddleware,
+  consoleAuditLogger,
+  type AuditEvent,
+  type AuditLogger,
+  type SecurityMiddlewareOptions
+} from "./security/middleware.js";
+export { resolveMethod, type MethodScope, type ResolvedMethod } from "./security/methods.js";
+export {
+  TaskOwnershipRegistry,
+  createOwnershipScopedTaskStore,
+  admittedRequestContext,
+  type AdmittedRequestContext,
+  type TaskOwnershipRecord,
+  type TaskOwnershipRegistryOptions
+} from "./security/tasks.js";
+export {
+  evaluateAdmission,
+  createStaticTokenResolver,
+  type AdmissionContext,
+  type AdmissionDecision,
+  type EvaluateAdmissionOptions,
+  type IdentityResolver,
+  type PresentedCredential
+} from "./security/admission.js";
 export {
   defaultSecurityPolicy,
   createSecurityPolicyFromEnv,
+  validateSecurityPolicy,
+  hashToken,
+  compareTrustTiers,
+  trustTierSatisfies,
+  PolicyConfigurationError,
+  DEVELOPMENT_TOKEN,
+  TRUST_TIERS,
+  RISK_LEVELS,
+  type ApprovalPolicy,
+  type ValidateSecurityPolicyOptions,
   type SecurityPolicy,
   type SecurityPolicyEnvironment,
   type SecurityIdentity,
@@ -54,6 +96,8 @@ export {
 } from "./runtime/sandbox.js";
 export {
   SecureToolRuntime,
+  SecureRuntimeError,
+  ToolCallBudget,
   type SecureRuntimeRequest
 } from "./runtime/secure-runtime.js";
 export {

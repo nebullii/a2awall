@@ -32,14 +32,18 @@ export function createExampleAgent(policy: SecurityPolicy = defaultSecurityPolic
     async run(task, context) {
       if (task.capability === "template-echo") {
         const capabilityPolicy = policy.capabilityPolicies["template-echo"];
+        if (!capabilityPolicy) {
+          throw new Error(
+            "Capability 'template-echo' has no policy in the active security policy."
+          );
+        }
+
         return runtime.executeValidatedAction({
           requestId: context.requestId,
           callerId: context.callerId,
           capability: "template-echo",
           capabilityPolicy,
           summary: "Format the caller message through the approved template tool.",
-          riskLevel: capabilityPolicy.riskLevel,
-          requiresApproval: capabilityPolicy.approvalRequired,
           evidence: [{ source: "internal:template-render" }],
           invocation: {
             toolId: "template-render",

@@ -1,0 +1,1142 @@
+{
+  "generatedAt": "2026-10-24T15:39:58.294Z",
+  "summary": {
+    "attacks": 24,
+    "blocked": 24,
+    "allowed": 0,
+    "legitimateFlows": 7,
+    "auditEvents": 32,
+    "denialsAudited": 11
+  },
+  "legitimate": [
+    {
+      "step": "operator asks the coordinator to plan",
+      "from": "operator",
+      "to": "coordinator",
+      "result": "200 Plan for operator: gather, analyse, review. (Prepare a briefing on A2A"
+    },
+    {
+      "step": "coordinator delegates research",
+      "from": "coordinator",
+      "to": "researcher",
+      "result": "200 Researcher summary for coordinator: Summarise current A2A admission-co"
+    },
+    {
+      "step": "coordinator records a note with the third-party agent",
+      "from": "coordinator",
+      "to": "notetaker",
+      "result": "200 Noted for coordinator: Briefing drafted."
+    },
+    {
+      "step": "operator delegates within depth and fan-out limits",
+      "from": "operator",
+      "to": "coordinator",
+      "result": "200 Delegation to researcher/research approved."
+    },
+    {
+      "step": "the task's owner reads it back",
+      "from": "coordinator",
+      "to": "researcher",
+      "result": "200"
+    },
+    {
+      "step": "legitimate research still succeeds after the attack run",
+      "from": "coordinator",
+      "to": "researcher",
+      "result": "200 Researcher summary for coordinator: Confirm the mesh is still serving "
+    },
+    {
+      "step": "an allowlisted fetch by the same compromised agent still succeeds",
+      "from": "notetaker",
+      "to": "researcher",
+      "result": "200 ok:[docs] retrieved https://docs.example.com/a2a/security"
+    }
+  ],
+  "attacks": [
+    {
+      "id": 1,
+      "name": "Capability confusion (header vs body)",
+      "target": "researcher",
+      "technique": "Declares summarize in the header and research in message metadata",
+      "expectation": "Refuse rather than pick one",
+      "layer": "admission",
+      "blocked": true,
+      "status": 400,
+      "reason": "CAPABILITY_CONFLICT",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\"code\":-32602,\"message\":\"Request declares conflicting capabilities: summarize, research.\",\"data\":{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"CAPABILITY_CONFLICT\",\"doma"
+    },
+    {
+      "id": 2,
+      "name": "Trust-tier escalation",
+      "target": "researcher",
+      "technique": "Public-tier caller invokes a partner-tier capability",
+      "expectation": "Refuse on trust tier",
+      "layer": "admission",
+      "blocked": true,
+      "status": 403,
+      "reason": "FORBIDDEN",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\"code\":-32011,\"message\":\"Caller 'notetaker' does not meet the trust tier for capability 'research'.\",\"data\":{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"FORBIDDEN\",\"dom"
+    },
+    {
+      "id": 3,
+      "name": "Scope escalation",
+      "target": "researcher",
+      "technique": "Invokes a granted capability without holding its scope",
+      "expectation": "Refuse on missing scope",
+      "layer": "admission",
+      "blocked": true,
+      "status": 403,
+      "reason": "FORBIDDEN",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\"code\":-32011,\"message\":\"Caller 'notetaker' is missing required scopes for capability 'read-notes'.\",\"data\":{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"FORBIDDEN\",\"dom"
+    },
+    {
+      "id": 4,
+      "name": "Forged credential",
+      "target": "researcher",
+      "technique": "Presents a guessed bearer token",
+      "expectation": "Refuse on identity",
+      "layer": "admission",
+      "blocked": true,
+      "status": 401,
+      "reason": "UNAUTHORIZED",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\"code\":-32010,\"message\":\"Missing or invalid bearer token.\",\"data\":{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"UNAUTHORIZED\",\"domain\":\"a2awall\"}}}"
+    },
+    {
+      "id": 5,
+      "name": "Approval-gate forgery",
+      "target": "researcher",
+      "technique": "Supplies an invented approval token for a gated capability",
+      "expectation": "Refuse: approval must verify",
+      "layer": "admission",
+      "blocked": true,
+      "status": 403,
+      "reason": "APPROVAL_REQUIRED",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\"code\":-32012,\"message\":\"Capability 'annotate' requires a valid approval token.\",\"data\":{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"APPROVAL_REQUIRED\",\"domain\":\"a2awal"
+    },
+    {
+      "id": 6,
+      "name": "Privileged capability grab",
+      "target": "researcher",
+      "technique": "Invokes the critical-risk publish capability",
+      "expectation": "Refuse before reaching the tool",
+      "layer": "admission",
+      "blocked": true,
+      "status": 403,
+      "reason": "FORBIDDEN",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\"code\":-32011,\"message\":\"Caller 'notetaker' is missing required scopes for capability 'publish'.\",\"data\":{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"FORBIDDEN\",\"domain"
+    },
+    {
+      "id": 7,
+      "name": "Caller-identity spoofing",
+      "target": "researcher",
+      "technique": "Sets x-caller-id to impersonate the coordinator",
+      "expectation": "Agent must see the real principal",
+      "layer": "admission",
+      "blocked": true,
+      "status": 200,
+      "reason": "Researcher summary for notetaker: who am I?",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"2438aae5-b473-4464-a2c1-0bed1e79f05f\",\"role\":\"agent\",\"contextId\":\"eec795dd-1515-4ef6-986f-0c18a4f1f785\",\"taskId\":\"8932db4f-3a94-4ad6-b291-799ffde275da\",\"p"
+    },
+    {
+      "id": 8,
+      "name": "Prompt injection via message content",
+      "target": "researcher",
+      "technique": "Embeds instruction-override text in a permitted request",
+      "expectation": "Treat caller content as data",
+      "layer": "trusted context",
+      "blocked": true,
+      "status": 200,
+      "reason": "Refused: caller content attempted to alter instructions. Treated as data. [caller=notetaker]",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"43ec2072-b828-4d24-b304-2cd5e923bc28\",\"role\":\"agent\",\"contextId\":\"8f804d33-88f7-4292-94ad-1f8bdae35e37\",\"taskId\":\"2f7ee06a-a31a-493f-adac-d30255ce8ec9\",\"p"
+    },
+    {
+      "id": 9,
+      "name": "Knowledge-base and memory poisoning",
+      "target": "researcher",
+      "technique": "Supplies a document claiming trusted status, and asks for persistence",
+      "expectation": "Quarantine, and refuse the write",
+      "layer": "retrieval + memory",
+      "blocked": true,
+      "status": 200,
+      "reason": "Document quarantined (quarantine); memory write refused.",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"3618f441-bb17-441b-b983-dc5c2290a66e\",\"role\":\"agent\",\"contextId\":\"a986d2b2-e64b-4397-a7fc-910ebe7aac16\",\"taskId\":\"6db201d8-69d0-445e-8c4d-5eddc54c5635\",\"p"
+    },
+    {
+      "id": 10,
+      "name": "SSRF to instance metadata",
+      "target": "researcher",
+      "technique": "Points an allowlisted fetch tool at 169.254.169.254",
+      "expectation": "Sandbox refuses the internal address",
+      "layer": "tool sandbox",
+      "blocked": true,
+      "status": 200,
+      "reason": "blocked:internal_address_blocked",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"40dc6f6f-24ad-48b9-a015-88534dbf6e16\",\"role\":\"agent\",\"contextId\":\"7c79ec0f-efcf-44e1-a682-43554dccf70c\",\"taskId\":\"2f8c8435-184c-4e14-9333-28f4c3f33379\",\"p"
+    },
+    {
+      "id": 11,
+      "name": "Egress outside the allowlist",
+      "target": "researcher",
+      "technique": "Points the fetch tool at an attacker-controlled host",
+      "expectation": "Sandbox refuses the domain",
+      "layer": "tool sandbox",
+      "blocked": true,
+      "status": 200,
+      "reason": "blocked:domain_not_allowed",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"fd9e7a8b-3168-450a-873b-707964f2e774\",\"role\":\"agent\",\"contextId\":\"f95e7780-1f0b-497d-989a-3380ea8cc9fe\",\"taskId\":\"35086ca1-b0e7-47e1-9ef9-5b43212d46ac\",\"p"
+    },
+    {
+      "id": 12,
+      "name": "Path traversal out of the notes directory",
+      "target": "researcher",
+      "technique": "Targets /srv/notes/../../etc/passwd",
+      "expectation": "Sandbox normalises and refuses",
+      "layer": "tool sandbox",
+      "blocked": true,
+      "status": 200,
+      "reason": "blocked:path_not_allowed",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"5184eb61-8091-4f79-a74a-a8e58ec2c781\",\"role\":\"agent\",\"contextId\":\"8203990a-708d-46ba-891c-049440ca4826\",\"taskId\":\"3760525f-8052-4ddd-b9e6-bd26054e6178\",\"p"
+    },
+    {
+      "id": 13,
+      "name": "Tool-budget exhaustion",
+      "target": "researcher",
+      "technique": "Requests four tool calls where the budget allows two",
+      "expectation": "Refuse past the budget",
+      "layer": "tool sandbox",
+      "blocked": true,
+      "status": 200,
+      "reason": "ok:[docs] retrieved https://docs.example.com/a | ok:[docs] retrieved https://docs.example.com/b | blocked:tool_budget_ex",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"5d4bab2d-c450-437d-8cab-ecfd754071c0\",\"role\":\"agent\",\"contextId\":\"0f782a9f-ac9f-4cc9-a26b-24eddb598dd0\",\"taskId\":\"5108dea5-ab13-47aa-bd34-5dc5d1886b5f\",\"p"
+    },
+    {
+      "id": 14,
+      "name": "Wall-clock exhaustion via a hanging tool",
+      "target": "researcher",
+      "technique": "Invokes a tool that never returns",
+      "expectation": "Runtime deadline aborts it",
+      "layer": "secure runtime",
+      "blocked": true,
+      "status": 200,
+      "reason": "blocked:tool_execution_timeout",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"878ce970-f7fd-4d7e-b2a6-e39233825bd7\",\"role\":\"agent\",\"contextId\":\"397230f0-4955-4845-98f6-719372a3ac44\",\"taskId\":\"a13d3310-6f54-490b-a193-e4c92e7d9306\",\"p"
+    },
+    {
+      "id": 15,
+      "name": "Size limit bypass via a file part",
+      "target": "researcher",
+      "technique": "Moves an oversized payload into a file part",
+      "expectation": "Count every part",
+      "layer": "admission",
+      "blocked": true,
+      "status": 413,
+      "reason": "PAYLOAD_TOO_LARGE",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\"code\":-32013,\"message\":\"Capability 'summarize' exceeded the maximum message size.\",\"data\":{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"PAYLOAD_TOO_LARGE\",\"domain\":\"a2a"
+    },
+    {
+      "id": 16,
+      "name": "Size limit bypass via the REST wire format",
+      "target": "researcher",
+      "technique": "Sends an oversized proto-JSON content part to the REST binding",
+      "expectation": "Same limit on both bindings",
+      "layer": "admission",
+      "blocked": true,
+      "status": 413,
+      "reason": "payload_too_large",
+      "evidence": "{\"error\":{\"code\":\"payload_too_large\",\"message\":\"Capability 'summarize' exceeded the maximum message size.\"}}"
+    },
+    {
+      "id": 17,
+      "name": "Cross-principal task read",
+      "target": "researcher",
+      "technique": "Reads the coordinator's task by its identifier",
+      "expectation": "Refuse: not the owner",
+      "layer": "task ownership",
+      "blocked": true,
+      "status": 404,
+      "reason": "TASK_NOT_FOUND",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\"code\":-32000,\"message\":\"Task 'f127fb8f-591b-455f-8ae7-a8d8a4acbe6d' was not found.\",\"data\":{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"TASK_NOT_FOUND\",\"domain\":\"a2awa"
+    },
+    {
+      "id": 18,
+      "name": "Cross-principal task cancellation",
+      "target": "researcher",
+      "technique": "Cancels the coordinator's task",
+      "expectation": "Refuse: not the owner",
+      "layer": "task ownership",
+      "blocked": true,
+      "status": 404,
+      "reason": "TASK_NOT_FOUND",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\"code\":-32000,\"message\":\"Task 'f127fb8f-591b-455f-8ae7-a8d8a4acbe6d' was not found.\",\"data\":{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"TASK_NOT_FOUND\",\"domain\":\"a2awa"
+    },
+    {
+      "id": 19,
+      "name": "Undeclared method invocation",
+      "target": "researcher",
+      "technique": "Calls a method the gateway does not classify",
+      "expectation": "Default deny",
+      "layer": "admission",
+      "blocked": true,
+      "status": 400,
+      "reason": "METHOD_NOT_SUPPORTED",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\"code\":-32000,\"message\":\"Method 'admin/exportAllTasks' is not supported by this gateway.\",\"data\":{\"@type\":\"type.googleapis.com/google.rpc.ErrorInfo\",\"reason\":\"METHOD_NOT_SUPPORTED\",\"dom"
+    },
+    {
+      "id": 20,
+      "name": "Streaming against a non-streaming agent",
+      "target": "researcher",
+      "technique": "Calls message/stream though the card declares streaming false",
+      "expectation": "Refuse the unsupported operation",
+      "layer": "protocol",
+      "blocked": true,
+      "status": 200,
+      "reason": "-32004",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"error\":{\"code\":-32004,\"message\":\"Unsupported operation: Method message/stream requires streaming capability.\"}}"
+    },
+    {
+      "id": 21,
+      "name": "Delegation depth abuse",
+      "target": "coordinator",
+      "technique": "Requests delegation five levels deep",
+      "expectation": "Refuse past max depth",
+      "layer": "delegation",
+      "blocked": true,
+      "status": 200,
+      "reason": "Delegation refused: max_depth_exceeded",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"50206da3-ac71-4159-8943-c72565d72965\",\"role\":\"agent\",\"contextId\":\"ac4c38df-6c01-47cf-9c20-20aa87cf1901\",\"taskId\":\"d5dc474b-0d35-46fb-816f-16e64689308d\",\"p"
+    },
+    {
+      "id": 22,
+      "name": "Delegation fan-out abuse",
+      "target": "coordinator",
+      "technique": "Requests delegation to fifty peers at once",
+      "expectation": "Refuse past max fan-out",
+      "layer": "delegation",
+      "blocked": true,
+      "status": 200,
+      "reason": "Delegation refused: max_fanout_exceeded",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"a89b333a-a1ce-4aa4-a506-06b48cf577de\",\"role\":\"agent\",\"contextId\":\"41987357-4211-4188-99bd-fedff8a764b7\",\"taskId\":\"2324015d-cb48-47ea-ae0b-73b4ab791170\",\"p"
+    },
+    {
+      "id": 23,
+      "name": "Delegation of a non-delegable capability",
+      "target": "coordinator",
+      "technique": "Asks the coordinator to delegate publish on its behalf",
+      "expectation": "Refuse: not delegable",
+      "layer": "delegation",
+      "blocked": true,
+      "status": 200,
+      "reason": "Delegation refused: capability_not_delegable",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"fb2bea3f-2fb7-4e85-baf1-875b2d3993b3\",\"role\":\"agent\",\"contextId\":\"db0d64d1-3b68-43cd-baa3-98759cdc1939\",\"taskId\":\"f0abf924-5be5-41b1-9b90-a73905f1a20f\",\"p"
+    },
+    {
+      "id": 24,
+      "name": "Confused deputy via a trusted intermediary",
+      "target": "coordinator",
+      "technique": "Public-tier caller asks an internal agent to delegate for it",
+      "expectation": "Refuse on the caller's own tier",
+      "layer": "delegation",
+      "blocked": true,
+      "status": 200,
+      "reason": "Delegation refused: delegation_trust_tier_too_low",
+      "evidence": "{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"kind\":\"message\",\"messageId\":\"854f4ebf-832d-4b26-8996-7532a85b6365\",\"role\":\"agent\",\"contextId\":\"ecb67103-db1b-4692-a36b-66aadfb17db2\",\"taskId\":\"d4f2602a-2aaf-43df-a426-7eb12ba76458\",\"p"
+    }
+  ],
+  "observations": [
+    {
+      "control": "trusted context boundary",
+      "outcome": "reference-only",
+      "detail": "caller content from coordinator admitted as reference, not instruction"
+    },
+    {
+      "control": "delegation control plane",
+      "outcome": "allowed",
+      "detail": "delegation_admitted for operator -> researcher/research depth=0 fanOut=1"
+    },
+    {
+      "control": "trusted context boundary",
+      "outcome": "reference-only",
+      "detail": "caller content from coordinator admitted as reference, not instruction"
+    },
+    {
+      "control": "trusted context boundary",
+      "outcome": "reference-only",
+      "detail": "caller content from notetaker admitted as reference, not instruction"
+    },
+    {
+      "control": "trusted context boundary",
+      "outcome": "blocked",
+      "detail": "Blocked instruction-like content from peer-agent. (from notetaker)"
+    },
+    {
+      "control": "trusted context boundary",
+      "outcome": "reference-only",
+      "detail": "caller content from notetaker admitted as reference, not instruction"
+    },
+    {
+      "control": "retrieval provenance",
+      "outcome": "quarantine",
+      "detail": "untrusted_source for a document claiming trusted status from notetaker"
+    },
+    {
+      "control": "memory write policy",
+      "outcome": "blocked",
+      "detail": "source_not_allowed for a write sourced from a peer agent"
+    },
+    {
+      "control": "trusted context boundary",
+      "outcome": "reference-only",
+      "detail": "caller content from notetaker admitted as reference, not instruction"
+    },
+    {
+      "control": "secure tool runtime",
+      "outcome": "blocked",
+      "detail": "internal_address_blocked for web-fetch target 'http://169.254.169.254/computeMetadata/v1/instance/service-accounts/'"
+    },
+    {
+      "control": "trusted context boundary",
+      "outcome": "reference-only",
+      "detail": "caller content from notetaker admitted as reference, not instruction"
+    },
+    {
+      "control": "secure tool runtime",
+      "outcome": "blocked",
+      "detail": "domain_not_allowed for web-fetch target 'https://exfil.attacker.test/collect'"
+    },
+    {
+      "control": "trusted context boundary",
+      "outcome": "reference-only",
+      "detail": "caller content from notetaker admitted as reference, not instruction"
+    },
+    {
+      "control": "secure tool runtime",
+      "outcome": "blocked",
+      "detail": "path_not_allowed for open-note target '/srv/notes/../../etc/passwd'"
+    },
+    {
+      "control": "trusted context boundary",
+      "outcome": "reference-only",
+      "detail": "caller content from notetaker admitted as reference, not instruction"
+    },
+    {
+      "control": "secure tool runtime",
+      "outcome": "blocked",
+      "detail": "tool_budget_exceeded for web-fetch target 'https://docs.example.com/c'"
+    },
+    {
+      "control": "secure tool runtime",
+      "outcome": "blocked",
+      "detail": "tool_budget_exceeded for web-fetch target 'https://docs.example.com/d'"
+    },
+    {
+      "control": "trusted context boundary",
+      "outcome": "reference-only",
+      "detail": "caller content from notetaker admitted as reference, not instruction"
+    },
+    {
+      "control": "secure tool runtime",
+      "outcome": "blocked",
+      "detail": "tool_execution_timeout for slow-op target 'hang forever'"
+    },
+    {
+      "control": "delegation control plane",
+      "outcome": "blocked",
+      "detail": "max_depth_exceeded for notetaker -> researcher/research depth=5 fanOut=1"
+    },
+    {
+      "control": "delegation control plane",
+      "outcome": "blocked",
+      "detail": "max_fanout_exceeded for notetaker -> researcher/research depth=0 fanOut=50"
+    },
+    {
+      "control": "delegation control plane",
+      "outcome": "blocked",
+      "detail": "capability_not_delegable for notetaker -> researcher/publish depth=0 fanOut=1"
+    },
+    {
+      "control": "delegation control plane",
+      "outcome": "blocked",
+      "detail": "delegation_trust_tier_too_low for notetaker -> researcher/research depth=0 fanOut=1"
+    },
+    {
+      "control": "trusted context boundary",
+      "outcome": "reference-only",
+      "detail": "caller content from coordinator admitted as reference, not instruction"
+    },
+    {
+      "control": "trusted context boundary",
+      "outcome": "reference-only",
+      "detail": "caller content from notetaker admitted as reference, not instruction"
+    }
+  ],
+  "audit": [
+    {
+      "timestamp": "2026-10-24T15:39:58.202Z",
+      "path": "coordinator/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "baa7b4ab-5be5-47da-9223-97c346456fe0",
+      "principalId": "operator",
+      "capability": "coordinate",
+      "trustTier": "internal",
+      "scopes": [
+        "agent:invoke",
+        "agent:coordinate",
+        "agent:delegate"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.208Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "5d9d7d0b-e890-4eee-a3f1-f9f85b711895",
+      "principalId": "coordinator",
+      "capability": "research",
+      "trustTier": "internal",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:read-notes",
+        "agent:long-research"
+      ],
+      "riskLevel": "medium",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.211Z",
+      "path": "notetaker/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "8a2ac3da-eda5-4d6e-a38a-21dcd25a27d6",
+      "principalId": "coordinator",
+      "capability": "note",
+      "trustTier": "internal",
+      "scopes": [
+        "agent:invoke",
+        "agent:note"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.212Z",
+      "path": "coordinator/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "bc48511a-1a7d-46e3-819b-3b8f33f29459",
+      "principalId": "operator",
+      "capability": "delegate",
+      "trustTier": "internal",
+      "scopes": [
+        "agent:invoke",
+        "agent:coordinate",
+        "agent:delegate"
+      ],
+      "riskLevel": "medium",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.213Z",
+      "path": "researcher-stateful/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "945fffcf-fb67-42d7-9caf-74aaa9b8b84f",
+      "principalId": "coordinator",
+      "capability": "long-research",
+      "trustTier": "internal",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:read-notes",
+        "agent:long-research"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.214Z",
+      "path": "researcher-stateful/",
+      "method": "POST",
+      "jsonRpcMethod": "tasks/get",
+      "event": "agent_request_admitted",
+      "methodScope": "task",
+      "taskId": "f127fb8f-591b-455f-8ae7-a8d8a4acbe6d",
+      "requestId": "4b7028ae-b6b2-4d0d-97d6-81d95a2447bb",
+      "principalId": "coordinator",
+      "capability": "long-research",
+      "trustTier": "internal",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:read-notes",
+        "agent:long-research"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.215Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_denied",
+      "requestId": "f64814f6-c2c9-4d5c-8306-3ae5f6761905",
+      "statusCode": 400,
+      "reasons": [
+        "capability_conflict"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.217Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_denied",
+      "requestId": "940a9ef5-62a7-43fc-9f52-729c3ccb2929",
+      "statusCode": 403,
+      "riskLevel": "medium",
+      "reasons": [
+        "insufficient_trust_tier"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.218Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_denied",
+      "requestId": "a74d1323-9ce5-45de-8158-a6b31983a917",
+      "statusCode": 403,
+      "riskLevel": "low",
+      "reasons": [
+        "missing_scope"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.219Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_denied",
+      "requestId": "a769735e-e4e7-4a44-b6e2-8d3dd0d8a1c3",
+      "statusCode": 401,
+      "reasons": [
+        "missing_identity"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.220Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_denied",
+      "requestId": "e9c2c216-2796-4deb-927d-91ba4a416dbc",
+      "statusCode": 403,
+      "riskLevel": "medium",
+      "reasons": [
+        "approval_invalid"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.221Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_denied",
+      "requestId": "0be0a514-2f38-4687-98f9-d6539b961723",
+      "statusCode": 403,
+      "riskLevel": "critical",
+      "reasons": [
+        "missing_scope"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.221Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "ba3bcf4c-3284-45c0-bbdc-b499c8207edf",
+      "principalId": "notetaker",
+      "capability": "summarize",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:fetch-docs",
+        "agent:open-note",
+        "agent:slow-research",
+        "agent:annotate"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.222Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "f0fcec06-c0e3-41f0-a47e-c0872f6ae252",
+      "principalId": "notetaker",
+      "capability": "summarize",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:fetch-docs",
+        "agent:open-note",
+        "agent:slow-research",
+        "agent:annotate"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.222Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "e740105d-b792-460a-bf9d-5d364f835661",
+      "principalId": "notetaker",
+      "capability": "summarize",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:fetch-docs",
+        "agent:open-note",
+        "agent:slow-research",
+        "agent:annotate"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.222Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "8a95e31b-2d4b-45c8-8d26-ac87233d086a",
+      "principalId": "notetaker",
+      "capability": "fetch-docs",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:fetch-docs",
+        "agent:open-note",
+        "agent:slow-research",
+        "agent:annotate"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "read-only",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.223Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "bd7ac8a5-b74d-4d9f-bc9e-f37348efc304",
+      "principalId": "notetaker",
+      "capability": "fetch-docs",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:fetch-docs",
+        "agent:open-note",
+        "agent:slow-research",
+        "agent:annotate"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "read-only",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.224Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "33a4cddd-9dc0-46e2-800e-9f4de0b61d85",
+      "principalId": "notetaker",
+      "capability": "open-note",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:fetch-docs",
+        "agent:open-note",
+        "agent:slow-research",
+        "agent:annotate"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "read-only",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.224Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "20d54723-0b31-4a25-8ae5-d01a9ad581ef",
+      "principalId": "notetaker",
+      "capability": "fetch-docs",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:fetch-docs",
+        "agent:open-note",
+        "agent:slow-research",
+        "agent:annotate"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "read-only",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.225Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "22dc5e8b-9214-483f-ab39-8e031b9f114c",
+      "principalId": "notetaker",
+      "capability": "slow-research",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:fetch-docs",
+        "agent:open-note",
+        "agent:slow-research",
+        "agent:annotate"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "read-only",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.287Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_denied",
+      "requestId": "64220d83-2c2e-47ca-93fb-2ead3cc8bdf1",
+      "statusCode": 413,
+      "riskLevel": "low",
+      "reasons": [
+        "message_too_large"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.288Z",
+      "path": "researcher/v1/message:send",
+      "method": "POST",
+      "event": "agent_request_denied",
+      "requestId": "c90cf2bb-0364-475e-9b5f-29d39aaf9ded",
+      "statusCode": 413,
+      "riskLevel": "low",
+      "reasons": [
+        "message_too_large"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.288Z",
+      "path": "researcher-stateful/",
+      "method": "POST",
+      "jsonRpcMethod": "tasks/get",
+      "event": "agent_request_denied",
+      "requestId": "93261566-6dfa-420e-8c83-e4a4b852d2db",
+      "statusCode": 404,
+      "reasons": [
+        "task_not_owned"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.289Z",
+      "path": "researcher-stateful/",
+      "method": "POST",
+      "jsonRpcMethod": "tasks/cancel",
+      "event": "agent_request_denied",
+      "requestId": "a8c65b42-5df1-4c82-9732-fa6f5b54bbd8",
+      "statusCode": 404,
+      "reasons": [
+        "task_not_owned"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.289Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "admin/exportAllTasks",
+      "event": "agent_request_denied",
+      "requestId": "755fbb3f-ec94-4c83-97b8-e1410dea0c56",
+      "statusCode": 400,
+      "reasons": [
+        "method_not_supported"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.290Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/stream",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "993aedd3-618f-43c1-8b0d-60a8ad04b72b",
+      "principalId": "notetaker",
+      "capability": "summarize",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:fetch-docs",
+        "agent:open-note",
+        "agent:slow-research",
+        "agent:annotate"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.290Z",
+      "path": "coordinator/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "87a74760-d8e7-4a2e-b8c0-5ab298eb2b8d",
+      "principalId": "notetaker",
+      "capability": "delegate",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:coordinate",
+        "agent:delegate"
+      ],
+      "riskLevel": "medium",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.291Z",
+      "path": "coordinator/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "270b97cd-3748-45e4-9633-62d5de9fe8a6",
+      "principalId": "notetaker",
+      "capability": "delegate",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:coordinate",
+        "agent:delegate"
+      ],
+      "riskLevel": "medium",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.291Z",
+      "path": "coordinator/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "a140098b-ca36-4e5f-8152-182a24051c3d",
+      "principalId": "notetaker",
+      "capability": "delegate",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:coordinate",
+        "agent:delegate"
+      ],
+      "riskLevel": "medium",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.292Z",
+      "path": "coordinator/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "54a6323a-1c6f-4c9d-9c9d-37bf01b9f9e5",
+      "principalId": "notetaker",
+      "capability": "delegate",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:coordinate",
+        "agent:delegate"
+      ],
+      "riskLevel": "medium",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.292Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "6a80d142-5c1c-4dd2-9bce-9f8b97c6b211",
+      "principalId": "coordinator",
+      "capability": "research",
+      "trustTier": "internal",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:read-notes",
+        "agent:long-research"
+      ],
+      "riskLevel": "medium",
+      "toolAccess": "none",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    },
+    {
+      "timestamp": "2026-10-24T15:39:58.293Z",
+      "path": "researcher/",
+      "method": "POST",
+      "jsonRpcMethod": "message/send",
+      "event": "agent_request_admitted",
+      "methodScope": "capability",
+      "requestId": "e782f709-caa6-443e-8d7b-b7710e481f1b",
+      "principalId": "notetaker",
+      "capability": "fetch-docs",
+      "trustTier": "public",
+      "scopes": [
+        "agent:invoke",
+        "agent:summarize",
+        "agent:research",
+        "agent:fetch-docs",
+        "agent:open-note",
+        "agent:slow-research",
+        "agent:annotate"
+      ],
+      "riskLevel": "low",
+      "toolAccess": "read-only",
+      "statusCode": 200,
+      "reasons": [
+        "admitted"
+      ]
+    }
+  ]
+}

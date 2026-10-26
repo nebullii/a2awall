@@ -5,6 +5,7 @@ const runtimeConfig = createRuntimeConfig({
   port: process.env.PORT,
   baseUrl: process.env.BASE_URL,
   bearerToken: process.env.SECURITY_BEARER_TOKEN,
+  bearerTokenSha256: process.env.SECURITY_BEARER_TOKEN_SHA256,
   principalId: process.env.SECURITY_PRINCIPAL_ID,
   scopes: process.env.SECURITY_SCOPES,
   allowedCapabilities: process.env.SECURITY_ALLOWED_CAPABILITIES,

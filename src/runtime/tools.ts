@@ -3,6 +3,13 @@ import type { ToolDefinition, ToolOperation } from "./sandbox.js";
 export interface ToolExecutionContext {
   requestId: string;
   capability: string;
+  /**
+   * Aborted when the capability's runtime budget expires. Tools that perform
+   * I/O must forward this signal so that a timeout actually stops work.
+   */
+  signal: AbortSignal;
+  /** Epoch milliseconds after which the runtime stops waiting for this tool. */
+  deadlineMs: number;
 }
 
 export interface RegisteredTool extends ToolDefinition {
@@ -21,6 +28,10 @@ export class ToolRegistry {
 
   get(toolId: string): RegisteredTool | undefined {
     return this.tools.get(toolId);
+  }
+
+  ids(): string[] {
+    return [...this.tools.keys()];
   }
 }
 

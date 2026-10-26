@@ -1,0 +1,933 @@
+<title>A2AWall Adversarial Run</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  /* Layout: a status band, the attack matrix grouped by defending layer, then the evidence it left behind. */
+  :root {
+    --bg: #f3f5f7;
+    --surface: #ffffff;
+    --surface-sunk: #eceff2;
+    --line: #d5dbe1;
+    --line-soft: #e4e9ed;
+    --fg: #16202b;
+    --fg-muted: #5a6875;
+    --fg-faint: #8695a3;
+    --accent: #0f6d8f;
+    --accent-soft: #e0eff5;
+    --held: #1c6b4b;
+    --held-soft: #dff0e7;
+    --breach: #a32218;
+    --breach-soft: #fbe4e1;
+    --deep: #7a5a12;
+    --deep-soft: #f8eed6;
+    --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10161c;
+      --surface: #182028;
+      --surface-sunk: #131a21;
+      --line: #2c3945;
+      --line-soft: #222d38;
+      --fg: #e6edf3;
+      --fg-muted: #a0aeba;
+      --fg-faint: #76858f;
+      --accent: #57b6d8;
+      --accent-soft: #14323f;
+      --held: #6cc79b;
+      --held-soft: #14301f;
+      --breach: #f08a7e;
+      --breach-soft: #3a1714;
+      --deep: #ddb15f;
+      --deep-soft: #322710;
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #10161c;
+    --surface: #182028;
+    --surface-sunk: #131a21;
+    --line: #2c3945;
+    --line-soft: #222d38;
+    --fg: #e6edf3;
+    --fg-muted: #a0aeba;
+    --fg-faint: #76858f;
+    --accent: #57b6d8;
+    --accent-soft: #14323f;
+    --held: #6cc79b;
+    --held-soft: #14301f;
+    --breach: #f08a7e;
+    --breach-soft: #3a1714;
+    --deep: #ddb15f;
+    --deep-soft: #322710;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding-block: 40px 64px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(26px, 4.2vw, 38px);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 16px;
+    color: var(--fg-muted);
+    max-width: 64ch;
+    margin: 0 0 8px;
+  }
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--fg-faint);
+    margin: 0;
+  }
+
+  h2 {
+    font-size: 13px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    font-weight: 600;
+    margin: 0 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  section { margin-top: 44px; }
+  p { margin: 0 0 12px; max-width: 68ch; }
+
+  /* Status band */
+  .band {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 28px;
+  }
+  .stat { background: var(--surface); padding: 16px 18px; }
+  .stat-value {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .stat-value.ok { color: var(--held); }
+  .stat-label {
+    font-size: 11.5px;
+    color: var(--fg-muted);
+    margin-top: 4px;
+  }
+
+  .verdict-strip {
+    margin-top: 1px;
+    background: var(--held-soft);
+    border: 1px solid var(--line);
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    padding: 12px 18px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--held);
+  }
+  .verdict-strip.bad { background: var(--breach-soft); color: var(--breach); }
+
+  /* Topology */
+  .topology {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .node {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+  .node.rogue { border-color: var(--breach); background: var(--breach-soft); }
+  .node-name {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .node.rogue .node-name { color: var(--breach); }
+  .node-role { font-size: 12px; color: var(--fg-muted); margin-top: 2px; }
+  .node-tier {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    background: var(--surface-sunk);
+    color: var(--fg-muted);
+    border: 1px solid var(--line-soft);
+  }
+  .node.rogue .node-tier { background: var(--surface); color: var(--breach); border-color: var(--breach); }
+
+  /* Tables */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+  table { width: 100%; border-collapse: collapse; min-width: 640px; }
+  thead th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    font-weight: 600;
+    padding: 10px 12px;
+    background: var(--surface-sunk);
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+    min-width: 0;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--fg-faint); }
+  .attack-name { font-weight: 500; }
+  .attack-technique { font-size: 12px; color: var(--fg-muted); margin-top: 2px; }
+  td.detail { font-size: 12px; color: var(--fg-muted); }
+  code {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--fg);
+    word-break: break-word;
+  }
+  code.dim { color: var(--fg-faint); }
+
+  .layer {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 2px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .status {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-size: 11.5px;
+  }
+  .status-http { background: var(--accent-soft); color: var(--accent); }
+  .status-deep { background: var(--deep-soft); color: var(--deep); }
+  .verdict {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .verdict.held { background: var(--held-soft); color: var(--held); }
+  .verdict.breach { background: var(--breach-soft); color: var(--breach); }
+
+  /* Layer tally */
+  .tally { display: flex; flex-direction: column; gap: 8px; }
+  .tally-row { display: grid; grid-template-columns: minmax(110px, 168px) 1fr auto; gap: 12px; align-items: center; }
+  .tally-label { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-muted); min-width: 0; }
+  .tally-track { background: var(--surface-sunk); border-radius: 2px; height: 16px; border: 1px solid var(--line-soft); }
+  .tally-bar { background: var(--accent); height: 100%; border-radius: 1px; }
+  .tally-count { font-family: var(--font-mono); font-size: 11.5px; font-variant-numeric: tabular-nums; color: var(--held); }
+
+  .flows { display: flex; flex-direction: column; gap: 6px; }
+  .flow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: baseline;
+    background: var(--surface);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: 9px 12px;
+  }
+  .flow-step { font-size: 13px; min-width: 0; }
+  .flow-hop { font-family: var(--font-mono); font-size: 11px; color: var(--fg-faint); }
+  .flow-result { font-family: var(--font-mono); font-size: 11.5px; color: var(--held); white-space: nowrap; }
+
+  .caveats {
+    background: var(--surface-sunk);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--deep);
+    border-radius: 3px;
+    padding: 16px 18px;
+  }
+  .caveats ul { margin: 0; padding-left: 18px; }
+  .caveats li { margin-bottom: 7px; color: var(--fg-muted); font-size: 13px; }
+  .caveats li:last-child { margin-bottom: 0; }
+  .caveats strong { color: var(--fg); font-weight: 600; }
+
+  @media (max-width: 560px) {
+    .tally-row { grid-template-columns: 1fr auto; }
+    .tally-track { display: none; }
+    .flow { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">A2AWall / adversarial run</p>
+  <h1>Three agents, one of them compromised</h1>
+  <p class="standfirst">
+    Three A2A agents collaborate, each behind its own A2AWall gateway. The third holds
+    valid credentials for the mesh and turns them against its peers. Every figure below
+    comes from the run recorded in <code>adversarial-results.json</code>.
+  </p>
+  <p class="meta">run 2026-10-24 15:39:58Z &middot; scenario: src/scenarios/adversarial.ts</p>
+
+  <div class="band">
+    <div class="stat">
+      <div class="stat-value ok">24/24</div>
+      <div class="stat-label">attacks refused</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">11</div>
+      <div class="stat-label">refused at the gateway</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">13</div>
+      <div class="stat-label">admitted, refused deeper</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">7</div>
+      <div class="stat-label">legitimate flows unaffected</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">11</div>
+      <div class="stat-label">denials in the audit log</div>
+    </div>
+  </div>
+  <div class="verdict-strip">
+    No attack reached agent logic. 13 were admitted as well-formed requests and stopped by a control below the gateway.
+  </div>
+
+  <section>
+    <h2>The mesh</h2>
+    <div class="topology">
+      <div class="node">
+        <div class="node-name">coordinator</div>
+        <div class="node-role">Plans work and delegates it to peers.</div>
+        <div class="node-tier">internal</div>
+      </div>
+      <div class="node">
+        <div class="node-name">researcher</div>
+        <div class="node-role">Retrieves reference material through sandboxed tools.</div>
+        <div class="node-tier">partner-gated</div>
+      </div>
+      <div class="node rogue">
+        <div class="node-name">notetaker &mdash; compromised</div>
+        <div class="node-role">A third-party agent with real credentials, used to attack the other two.</div>
+        <div class="node-tier">public</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Which layer refused what</h2>
+    <p>
+      Attacks are grouped by the control that stopped them. A request refused at the
+      gateway never reached the agent; one refused below the gateway was a well-formed,
+      authorized request whose <em>content</em> was hostile, which is the case the
+      admission layer cannot decide on its own.
+    </p>
+    <div class="tally">
+        <div class="tally-row">
+          <div class="tally-label">admission</div>
+          <div class="tally-track"><div class="tally-bar" style="width:100%"></div></div>
+          <div class="tally-count">10/10</div>
+        </div>
+        <div class="tally-row">
+          <div class="tally-label">task ownership</div>
+          <div class="tally-track"><div class="tally-bar" style="width:20%"></div></div>
+          <div class="tally-count">2/2</div>
+        </div>
+        <div class="tally-row">
+          <div class="tally-label">trusted context</div>
+          <div class="tally-track"><div class="tally-bar" style="width:10%"></div></div>
+          <div class="tally-count">1/1</div>
+        </div>
+        <div class="tally-row">
+          <div class="tally-label">retrieval + memory</div>
+          <div class="tally-track"><div class="tally-bar" style="width:10%"></div></div>
+          <div class="tally-count">1/1</div>
+        </div>
+        <div class="tally-row">
+          <div class="tally-label">tool sandbox</div>
+          <div class="tally-track"><div class="tally-bar" style="width:40%"></div></div>
+          <div class="tally-count">4/4</div>
+        </div>
+        <div class="tally-row">
+          <div class="tally-label">secure runtime</div>
+          <div class="tally-track"><div class="tally-bar" style="width:10%"></div></div>
+          <div class="tally-count">1/1</div>
+        </div>
+        <div class="tally-row">
+          <div class="tally-label">delegation</div>
+          <div class="tally-track"><div class="tally-bar" style="width:40%"></div></div>
+          <div class="tally-count">4/4</div>
+        </div>
+        <div class="tally-row">
+          <div class="tally-label">protocol</div>
+          <div class="tally-track"><div class="tally-bar" style="width:10%"></div></div>
+          <div class="tally-count">1/1</div>
+        </div></div>
+  </section>
+
+  <section>
+    <h2>Attack matrix</h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Attack</th>
+            <th>Refused by</th>
+            <th>Status</th>
+            <th>Reason</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+      <tr>
+        <td class="num">1</td>
+        <td>
+          <div class="attack-name">Capability confusion (header vs body)</div>
+          <div class="attack-technique">Declares summarize in the header and research in message metadata</div>
+        </td>
+        <td><span class="layer">admission</span></td>
+        <td class="num"><span class="status status-http">400</span></td>
+        <td><code>CAPABILITY_CONFLICT</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">2</td>
+        <td>
+          <div class="attack-name">Trust-tier escalation</div>
+          <div class="attack-technique">Public-tier caller invokes a partner-tier capability</div>
+        </td>
+        <td><span class="layer">admission</span></td>
+        <td class="num"><span class="status status-http">403</span></td>
+        <td><code>FORBIDDEN</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">3</td>
+        <td>
+          <div class="attack-name">Scope escalation</div>
+          <div class="attack-technique">Invokes a granted capability without holding its scope</div>
+        </td>
+        <td><span class="layer">admission</span></td>
+        <td class="num"><span class="status status-http">403</span></td>
+        <td><code>FORBIDDEN</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">4</td>
+        <td>
+          <div class="attack-name">Forged credential</div>
+          <div class="attack-technique">Presents a guessed bearer token</div>
+        </td>
+        <td><span class="layer">admission</span></td>
+        <td class="num"><span class="status status-http">401</span></td>
+        <td><code>UNAUTHORIZED</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">5</td>
+        <td>
+          <div class="attack-name">Approval-gate forgery</div>
+          <div class="attack-technique">Supplies an invented approval token for a gated capability</div>
+        </td>
+        <td><span class="layer">admission</span></td>
+        <td class="num"><span class="status status-http">403</span></td>
+        <td><code>APPROVAL_REQUIRED</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">6</td>
+        <td>
+          <div class="attack-name">Privileged capability grab</div>
+          <div class="attack-technique">Invokes the critical-risk publish capability</div>
+        </td>
+        <td><span class="layer">admission</span></td>
+        <td class="num"><span class="status status-http">403</span></td>
+        <td><code>FORBIDDEN</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">7</td>
+        <td>
+          <div class="attack-name">Caller-identity spoofing</div>
+          <div class="attack-technique">Sets x-caller-id to impersonate the coordinator</div>
+        </td>
+        <td><span class="layer">admission</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>Researcher summary for notetaker: who am I?</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">15</td>
+        <td>
+          <div class="attack-name">Size limit bypass via a file part</div>
+          <div class="attack-technique">Moves an oversized payload into a file part</div>
+        </td>
+        <td><span class="layer">admission</span></td>
+        <td class="num"><span class="status status-http">413</span></td>
+        <td><code>PAYLOAD_TOO_LARGE</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">16</td>
+        <td>
+          <div class="attack-name">Size limit bypass via the REST wire format</div>
+          <div class="attack-technique">Sends an oversized proto-JSON content part to the REST binding</div>
+        </td>
+        <td><span class="layer">admission</span></td>
+        <td class="num"><span class="status status-http">413</span></td>
+        <td><code>payload_too_large</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">19</td>
+        <td>
+          <div class="attack-name">Undeclared method invocation</div>
+          <div class="attack-technique">Calls a method the gateway does not classify</div>
+        </td>
+        <td><span class="layer">admission</span></td>
+        <td class="num"><span class="status status-http">400</span></td>
+        <td><code>METHOD_NOT_SUPPORTED</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">17</td>
+        <td>
+          <div class="attack-name">Cross-principal task read</div>
+          <div class="attack-technique">Reads the coordinator's task by its identifier</div>
+        </td>
+        <td><span class="layer">task ownership</span></td>
+        <td class="num"><span class="status status-http">404</span></td>
+        <td><code>TASK_NOT_FOUND</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">18</td>
+        <td>
+          <div class="attack-name">Cross-principal task cancellation</div>
+          <div class="attack-technique">Cancels the coordinator's task</div>
+        </td>
+        <td><span class="layer">task ownership</span></td>
+        <td class="num"><span class="status status-http">404</span></td>
+        <td><code>TASK_NOT_FOUND</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">8</td>
+        <td>
+          <div class="attack-name">Prompt injection via message content</div>
+          <div class="attack-technique">Embeds instruction-override text in a permitted request</div>
+        </td>
+        <td><span class="layer">trusted context</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>Refused: caller content attempted to alter instructions. Treated as data. [caller=notetaker]</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">9</td>
+        <td>
+          <div class="attack-name">Knowledge-base and memory poisoning</div>
+          <div class="attack-technique">Supplies a document claiming trusted status, and asks for persistence</div>
+        </td>
+        <td><span class="layer">retrieval + memory</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>Document quarantined (quarantine); memory write refused.</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">10</td>
+        <td>
+          <div class="attack-name">SSRF to instance metadata</div>
+          <div class="attack-technique">Points an allowlisted fetch tool at 169.254.169.254</div>
+        </td>
+        <td><span class="layer">tool sandbox</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>blocked:internal_address_blocked</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">11</td>
+        <td>
+          <div class="attack-name">Egress outside the allowlist</div>
+          <div class="attack-technique">Points the fetch tool at an attacker-controlled host</div>
+        </td>
+        <td><span class="layer">tool sandbox</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>blocked:domain_not_allowed</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">12</td>
+        <td>
+          <div class="attack-name">Path traversal out of the notes directory</div>
+          <div class="attack-technique">Targets /srv/notes/../../etc/passwd</div>
+        </td>
+        <td><span class="layer">tool sandbox</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>blocked:path_not_allowed</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">13</td>
+        <td>
+          <div class="attack-name">Tool-budget exhaustion</div>
+          <div class="attack-technique">Requests four tool calls where the budget allows two</div>
+        </td>
+        <td><span class="layer">tool sandbox</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>ok:[docs] retrieved https://docs.example.com/a | ok:[docs] retrieved https://docs.example.com/b | blocked:tool_budget_ex</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">14</td>
+        <td>
+          <div class="attack-name">Wall-clock exhaustion via a hanging tool</div>
+          <div class="attack-technique">Invokes a tool that never returns</div>
+        </td>
+        <td><span class="layer">secure runtime</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>blocked:tool_execution_timeout</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">21</td>
+        <td>
+          <div class="attack-name">Delegation depth abuse</div>
+          <div class="attack-technique">Requests delegation five levels deep</div>
+        </td>
+        <td><span class="layer">delegation</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>Delegation refused: max_depth_exceeded</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">22</td>
+        <td>
+          <div class="attack-name">Delegation fan-out abuse</div>
+          <div class="attack-technique">Requests delegation to fifty peers at once</div>
+        </td>
+        <td><span class="layer">delegation</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>Delegation refused: max_fanout_exceeded</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">23</td>
+        <td>
+          <div class="attack-name">Delegation of a non-delegable capability</div>
+          <div class="attack-technique">Asks the coordinator to delegate publish on its behalf</div>
+        </td>
+        <td><span class="layer">delegation</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>Delegation refused: capability_not_delegable</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">24</td>
+        <td>
+          <div class="attack-name">Confused deputy via a trusted intermediary</div>
+          <div class="attack-technique">Public-tier caller asks an internal agent to delegate for it</div>
+        </td>
+        <td><span class="layer">delegation</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>Delegation refused: delegation_trust_tier_too_low</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+      <tr>
+        <td class="num">20</td>
+        <td>
+          <div class="attack-name">Streaming against a non-streaming agent</div>
+          <div class="attack-technique">Calls message/stream though the card declares streaming false</div>
+        </td>
+        <td><span class="layer">protocol</span></td>
+        <td class="num"><span class="status status-deep">200</span></td>
+        <td><code>-32004</code></td>
+        <td><span class="verdict held">held</span></td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Controls below the gateway</h2>
+    <p>
+      These decisions were made after the request was admitted, by the modules the
+      roadmap describes as policy evaluators. Here they run as controls in the request
+      path rather than as libraries.
+    </p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Control</th><th>Outcome</th><th>Detail</th></tr>
+        </thead>
+        <tbody>
+      <tr>
+        <td><span class="layer">trusted context boundary</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">Blocked instruction-like content from peer-agent. (from notetaker)</td>
+      </tr>
+      <tr>
+        <td><span class="layer">retrieval provenance</span></td>
+        <td><code>quarantine</code></td>
+        <td class="detail">untrusted_source for a document claiming trusted status from notetaker</td>
+      </tr>
+      <tr>
+        <td><span class="layer">memory write policy</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">source_not_allowed for a write sourced from a peer agent</td>
+      </tr>
+      <tr>
+        <td><span class="layer">secure tool runtime</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">internal_address_blocked for web-fetch target 'http://169.254.169.254/computeMetadata/v1/instance/service-accounts/'</td>
+      </tr>
+      <tr>
+        <td><span class="layer">secure tool runtime</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">domain_not_allowed for web-fetch target 'https://exfil.attacker.test/collect'</td>
+      </tr>
+      <tr>
+        <td><span class="layer">secure tool runtime</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">path_not_allowed for open-note target '/srv/notes/../../etc/passwd'</td>
+      </tr>
+      <tr>
+        <td><span class="layer">secure tool runtime</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">tool_budget_exceeded for web-fetch target 'https://docs.example.com/c'</td>
+      </tr>
+      <tr>
+        <td><span class="layer">secure tool runtime</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">tool_budget_exceeded for web-fetch target 'https://docs.example.com/d'</td>
+      </tr>
+      <tr>
+        <td><span class="layer">secure tool runtime</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">tool_execution_timeout for slow-op target 'hang forever'</td>
+      </tr>
+      <tr>
+        <td><span class="layer">delegation control plane</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">max_depth_exceeded for notetaker -&gt; researcher/research depth=5 fanOut=1</td>
+      </tr>
+      <tr>
+        <td><span class="layer">delegation control plane</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">max_fanout_exceeded for notetaker -&gt; researcher/research depth=0 fanOut=50</td>
+      </tr>
+      <tr>
+        <td><span class="layer">delegation control plane</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">capability_not_delegable for notetaker -&gt; researcher/publish depth=0 fanOut=1</td>
+      </tr>
+      <tr>
+        <td><span class="layer">delegation control plane</span></td>
+        <td><code>blocked</code></td>
+        <td class="detail">delegation_trust_tier_too_low for notetaker -&gt; researcher/research depth=0 fanOut=1</td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Audit trail</h2>
+    <p>
+      The gateway returns a generic reason to the caller and records the precise one
+      internally. A cross-principal task read answers <code>TASK_NOT_FOUND</code> so that
+      the task's existence cannot be probed, while the log keeps
+      <code>task_not_owned</code>.
+    </p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Status</th><th>Recorded reason</th><th>Method</th><th>Gateway / path</th></tr>
+        </thead>
+        <tbody>
+      <tr>
+        <td class="num"><span class="status status-http">400</span></td>
+        <td><code>capability_conflict</code></td>
+        <td><code class="dim">message/send</code></td>
+        <td><code class="dim">researcher/</code></td>
+      </tr>
+      <tr>
+        <td class="num"><span class="status status-http">403</span></td>
+        <td><code>insufficient_trust_tier</code></td>
+        <td><code class="dim">message/send</code></td>
+        <td><code class="dim">researcher/</code></td>
+      </tr>
+      <tr>
+        <td class="num"><span class="status status-http">403</span></td>
+        <td><code>missing_scope</code></td>
+        <td><code class="dim">message/send</code></td>
+        <td><code class="dim">researcher/</code></td>
+      </tr>
+      <tr>
+        <td class="num"><span class="status status-http">401</span></td>
+        <td><code>missing_identity</code></td>
+        <td><code class="dim">message/send</code></td>
+        <td><code class="dim">researcher/</code></td>
+      </tr>
+      <tr>
+        <td class="num"><span class="status status-http">403</span></td>
+        <td><code>approval_invalid</code></td>
+        <td><code class="dim">message/send</code></td>
+        <td><code class="dim">researcher/</code></td>
+      </tr>
+      <tr>
+        <td class="num"><span class="status status-http">403</span></td>
+        <td><code>missing_scope</code></td>
+        <td><code class="dim">message/send</code></td>
+        <td><code class="dim">researcher/</code></td>
+      </tr>
+      <tr>
+        <td class="num"><span class="status status-http">413</span></td>
+        <td><code>message_too_large</code></td>
+        <td><code class="dim">message/send</code></td>
+        <td><code class="dim">researcher/</code></td>
+      </tr>
+      <tr>
+        <td class="num"><span class="status status-http">413</span></td>
+        <td><code>message_too_large</code></td>
+        <td><code class="dim">-</code></td>
+        <td><code class="dim">researcher/v1/message:send</code></td>
+      </tr>
+      <tr>
+        <td class="num"><span class="status status-http">404</span></td>
+        <td><code>task_not_owned</code></td>
+        <td><code class="dim">tasks/get</code></td>
+        <td><code class="dim">researcher-stateful/</code></td>
+      </tr>
+      <tr>
+        <td class="num"><span class="status status-http">404</span></td>
+        <td><code>task_not_owned</code></td>
+        <td><code class="dim">tasks/cancel</code></td>
+        <td><code class="dim">researcher-stateful/</code></td>
+      </tr>
+      <tr>
+        <td class="num"><span class="status status-http">400</span></td>
+        <td><code>method_not_supported</code></td>
+        <td><code class="dim">admin/exportAllTasks</code></td>
+        <td><code class="dim">researcher/</code></td>
+      </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Legitimate traffic</h2>
+    <p>A control that blocks everything is not a control. These flows ran before and after the attack phase.</p>
+    <div class="flows">
+      <div class="flow">
+        <div class="flow-step">operator asks the coordinator to plan<div class="flow-hop">operator &rarr; coordinator</div></div>
+        <div class="flow-result">200 Plan for operator: gather, analyse, review. (Prepare a briefing on A2A</div>
+      </div>
+      <div class="flow">
+        <div class="flow-step">coordinator delegates research<div class="flow-hop">coordinator &rarr; researcher</div></div>
+        <div class="flow-result">200 Researcher summary for coordinator: Summarise current A2A admission-co</div>
+      </div>
+      <div class="flow">
+        <div class="flow-step">coordinator records a note with the third-party agent<div class="flow-hop">coordinator &rarr; notetaker</div></div>
+        <div class="flow-result">200 Noted for coordinator: Briefing drafted.</div>
+      </div>
+      <div class="flow">
+        <div class="flow-step">operator delegates within depth and fan-out limits<div class="flow-hop">operator &rarr; coordinator</div></div>
+        <div class="flow-result">200 Delegation to researcher/research approved.</div>
+      </div>
+      <div class="flow">
+        <div class="flow-step">the task's owner reads it back<div class="flow-hop">coordinator &rarr; researcher</div></div>
+        <div class="flow-result">200</div>
+      </div>
+      <div class="flow">
+        <div class="flow-step">legitimate research still succeeds after the attack run<div class="flow-hop">coordinator &rarr; researcher</div></div>
+        <div class="flow-result">200 Researcher summary for coordinator: Confirm the mesh is still serving </div>
+      </div>
+      <div class="flow">
+        <div class="flow-step">an allowlisted fetch by the same compromised agent still succeeds<div class="flow-hop">notetaker &rarr; researcher</div></div>
+        <div class="flow-result">200 ok:[docs] retrieved https://docs.example.com/a2a/security</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What this run does not show</h2>
+    <div class="caveats">
+      <ul>
+        <li><strong>The attacker is scripted, not independent.</strong> These are the attacks
+          A2AWall was built to refuse, written by the same author. A real assessment needs
+          an adversary who did not read the source.</li>
+        <li><strong>The agents are deterministic.</strong> No model is in the loop, so the
+          prompt-injection case tests the trusted context boundary's classification, not a
+          model's resistance to persuasion.</li>
+        <li><strong>The tool sandbox is a policy evaluator, not isolation.</strong> Tools run
+          in the gateway process. The SSRF and traversal cases were refused before any I/O,
+          which is not the same as containing a tool that misbehaves.</li>
+        <li><strong>Lexical checks only.</strong> Host and path allowlists are evaluated as
+          text. A hostname that resolves to a blocked address, or a symlink out of an allowed
+          directory, is the responsibility of the component performing the I/O.</li>
+        <li><strong>Single process, in-memory state.</strong> Task ownership is known only to
+          the instance that admitted the request. A multi-instance deployment needs a shared
+          store.</li>
+        <li><strong>Credentials are static bearer tokens.</strong> A signed-token verifier is
+          an extension point, not something shipped here.</li>
+      </ul>
+    </div>
+  </section>
+</div>

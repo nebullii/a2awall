@@ -34,6 +34,7 @@ export function createRuntimeConfig(environment: RuntimeEnvironment = process.en
     baseUrl,
     securityPolicy: createSecurityPolicyFromEnv({
       bearerToken: readSetting(environment, "bearerToken", "SECURITY_BEARER_TOKEN"),
+      bearerTokenSha256: readSetting(environment, "bearerTokenSha256", "SECURITY_BEARER_TOKEN_SHA256"),
       principalId: readSetting(environment, "principalId", "SECURITY_PRINCIPAL_ID"),
       scopes: readSetting(environment, "scopes", "SECURITY_SCOPES"),
       allowedCapabilities: readSetting(environment, "allowedCapabilities", "SECURITY_ALLOWED_CAPABILITIES"),

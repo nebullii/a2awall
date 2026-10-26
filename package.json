@@ -28,8 +28,12 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "smoke": "tsx src/smoke.ts",
-    "test": "npm run build && node dist/test.js",
-    "connect": "npm run build && node dist/cli/connect.js"
+    "test": "npm run build && node dist/test.js && node dist/e2e.js",
+    "connect": "npm run build && node dist/cli/connect.js",
+    "test:unit": "npm run build && node dist/test.js",
+    "test:e2e": "npm run build && node dist/e2e.js",
+    "scenario:adversarial": "npm run build && node dist/scenarios/adversarial.js",
+    "scenario:report": "npm run build && node dist/scenarios/report.js"
   },
   "keywords": [
     "a2a",
@@ -43,11 +47,11 @@
   "license": "MIT",
   "dependencies": {
     "@a2a-js/sdk": "^0.3.13",
-    "express": "^4.21.2"
+    "express": "^4.22.3"
   },
   "devDependencies": {
-    "@types/express": "^5.0.1",
-    "tsx": "^4.19.3",
+    "@types/express": "^4.17.21",
+    "tsx": "^4.23.15",
     "typescript": "^5.8.2"
   }
 }

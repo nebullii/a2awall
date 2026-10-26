@@ -1,6 +1,6 @@
-import { DefaultRequestHandler, InMemoryTaskStore } from "@a2a-js/sdk/server";
+import { DefaultRequestHandler, InMemoryTaskStore, ServerCallContext } from "@a2a-js/sdk/server";
 import type { MessageSendParams } from "@a2a-js/sdk";
-import { CustomAgentExecutor, createAgentCard } from "./a2a/executor.js";
+import { CustomAgentExecutor, GatewayPrincipal, createAgentCard } from "./a2a/executor.js";
 import { createExampleAgent } from "./core/example-agent.js";
 import { createSecurityMiddleware } from "./security/middleware.js";
 import { defaultSecurityPolicy } from "./security/policy.js";
@@ -26,7 +26,7 @@ async function verifyMiddleware() {
   };
 
   let unauthorizedNextCalled = false;
-  middleware(
+  await middleware(
     {
       header: () => undefined,
       headers: {},
@@ -59,14 +59,14 @@ async function verifyMiddleware() {
   };
 
   let forbiddenNextCalled = false;
-  middleware(
+  await middleware(
     {
       header(name: string) {
         if (name === "authorization") return "Bearer dev-token";
         if (name === "x-agent-capability") return "admin";
         return undefined;
       },
-      body: {},
+      body: { jsonrpc: "2.0", id: "1", method: "message/send" },
       headers: {},
       path: "/a2a/jsonrpc",
       method: "POST"
@@ -97,7 +97,7 @@ async function verifyMiddleware() {
   };
 
   let authorizedNextCalled = false;
-  middleware(
+  await middleware(
     {
       header(name: string) {
         if (name === "authorization") return "Bearer dev-token";
@@ -105,7 +105,7 @@ async function verifyMiddleware() {
         if (name === "x-request-id") return "req-123";
         return undefined;
       },
-      body: {},
+      body: { jsonrpc: "2.0", id: "1", method: "message/send" },
       headers: {},
       path: "/a2a/jsonrpc",
       method: "POST"
@@ -136,7 +136,7 @@ async function verifyRequestHandler() {
       security: agentCard.security,
       securitySchemes: agentCard.securitySchemes,
       skillSecurity: agentCard.skills[0]?.security,
-      templateEchoTools: (agentCard.skills[1] as unknown as Record<string, unknown> | undefined)?.["x-allowed-tools"]
+      securityExtension: agentCard.capabilities.extensions?.[0]?.uri
     })
   );
 
@@ -153,7 +153,10 @@ async function verifyRequestHandler() {
     }
   };
 
-  const response = await requestHandler.sendMessage(params);
+  const response = await requestHandler.sendMessage(
+    params,
+    new ServerCallContext(undefined, new GatewayPrincipal("smoke-caller", "echo", "req-456"))
+  );
   if (response.kind !== "message") {
     throw new Error(`Expected a direct message response, got ${response.kind}`);
   }
@@ -165,18 +168,21 @@ async function verifyRequestHandler() {
 
   console.log("a2a-response", firstPart.text);
 
-  const templateResponse = await requestHandler.sendMessage({
-    message: {
-      kind: "message",
-      messageId: "msg-2",
-      role: "user",
-      parts: [{ kind: "text", text: "hello via tool runtime" }],
-      metadata: {
-        requestId: "req-789",
-        capability: "template-echo"
+  const templateResponse = await requestHandler.sendMessage(
+    {
+      message: {
+        kind: "message",
+        messageId: "msg-2",
+        role: "user",
+        parts: [{ kind: "text", text: "hello via tool runtime" }],
+        metadata: { requestId: "req-789" }
       }
-    }
-  });
+    },
+    new ServerCallContext(
+      undefined,
+      new GatewayPrincipal("smoke-caller", "template-echo", "req-789")
+    )
+  );
 
   if (templateResponse.kind !== "message") {
     throw new Error(`Expected a direct message response, got ${templateResponse.kind}`);

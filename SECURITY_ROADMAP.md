@@ -77,15 +77,25 @@ Threats:
 
 ## Phase 3: Tool and Runtime Sandbox
 
-Status: implemented foundation
+Status: policy enforced, isolation not implemented
 
-Build:
+Implemented:
 
 - capability-to-tool mapping
-- network, filesystem, and action allowlists
-- approval requirements for privileged actions
-- execution budgets and timeout envelopes
-- action audit log
+- default-deny network and filesystem allowlists, with path normalisation and
+  blocking of loopback, private, and link-local targets including the cloud
+  instance metadata range
+- an operation matrix per access mode, so `bounded-write` cannot execute
+- tool call budgets that decrement across a request, and a wall-clock deadline
+  that aborts the call
+- verified approval tokens for privileged actions
+
+Not implemented:
+
+- process, container, or syscall isolation. A tool still runs in the gateway
+  process with the gateway's privileges
+- symlink and DNS rebinding resolution. The allowlist checks are lexical, so the
+  component performing the I/O must validate the resolved path or address
 
 Repo mapping:
 
@@ -162,9 +172,17 @@ Threats:
 
 ## Phase 7: Supply Chain and Dependency Hardening
 
+Status: partially implemented
+
+Implemented:
+
+- CI on every push and pull request, with an audit gate that fails on high and
+  critical advisories
+- weekly automated dependency and action updates
+- a private vulnerability disclosure policy in SECURITY.md
+
 Build:
 
-- dependency review and lock discipline
 - SBOM generation
 - signed policy artifacts where possible
 - protected prompt/policy update process
@@ -176,10 +194,17 @@ Threats:
 
 ## Recommended Next Implementation Step
 
-Integrate the new control layers into actual runtime execution and tool dispatch.
+Two tracks, in this order.
 
-Reason:
+1. Credential verification. `IdentityResolver` is the seam; the gap is a
+   verifier that validates a signed token's issuer, audience, and expiry. Until
+   then the only shipped mechanism is an opaque shared secret, which is a
+   development mechanism.
+2. Bind the remaining evaluators to real execution. Admission, the tool sandbox,
+   and output validation now run in the request path. Memory, retrieval, and
+   delegation are still evaluators with no runtime caller, so they are libraries
+   rather than controls.
 
-- the foundations now exist as policy and evaluation modules
-- the next step is binding them to real tool runners, memory backends, retrieval adapters, and delegated agent calls
-- that is where the framework becomes operational instead of only evaluative
+Tracked separately: migrating to A2A 1.0. The pinned SDK speaks 0.3.x, and 1.0
+reshapes the card, message, and part types rather than renaming them, so it is a
+data-model migration and not a version bump.
